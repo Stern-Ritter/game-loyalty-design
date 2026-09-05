@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лиги экономии — прототип экранов</title>
+<style>
+:root{
+  --ink:#12271F;
+  --ink-soft:#3D5348;
+  --muted:#6E8177;
+  --line:#E2E7E2;
+  --surface:#F3F6F3;
+  --white:#FFFFFF;
+  --up:#2F7D4F;
+  --hold:#A8B5AC;
+  --down:#C0483A;
+  --sun:#E4572E;
+  --radius:16px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:#E8EDE8;
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums;
+}
+.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}
+.page-head{margin-bottom:22px}
+.page-head h1{font-size:24px;line-height:1.2;margin:0 0 6px;letter-spacing:-.02em}
+.page-head p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+.workbench{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+
+/* ——— панель состояний ——— */
+.rail{flex:1 1 260px;min-width:250px;max-width:340px}
+.rail h2{font-size:13px;margin:0 0 10px;color:var(--muted);font-weight:600}
+.chip{
+  display:block;width:100%;text-align:left;margin-bottom:8px;padding:11px 13px;
+  border:1px solid var(--line);border-radius:12px;background:var(--white);
+  font:inherit;font-size:14px;color:var(--ink);cursor:pointer;
+}
+.chip small{display:block;color:var(--muted);font-size:12px;margin-top:2px;line-height:1.35}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:#fff}
+.chip[aria-pressed="true"] small{color:#B6C8BC}
+.chip:focus-visible,.tab:focus-visible,.rowlink:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.note{margin-top:16px;font-size:12.5px;color:var(--muted);line-height:1.5}
+
+/* ——— телефон ——— */
+.phone{
+  flex:0 0 390px;width:390px;height:812px;background:var(--white);
+  border-radius:38px;border:1px solid #CFD8D0;overflow:hidden;
+  display:flex;flex-direction:column;position:relative;
+}
+.status{height:26px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:11px;color:var(--muted)}
+.app-head{background:var(--ink);color:#fff;padding:14px 18px 16px}
+.app-head .league-line{display:flex;align-items:center;gap:10px}
+.badge{width:38px;height:38px;border-radius:11px;flex:0 0 38px}
+.league-name{font-size:18px;font-weight:650;letter-spacing:-.01em}
+.league-sub{font-size:12.5px;color:#A9C0B2;margin-top:1px}
+.countdown{margin-left:auto;text-align:right;font-size:12.5px;color:#A9C0B2;line-height:1.3}
+.countdown b{display:block;color:#fff;font-size:16px;font-weight:650}
+
+.screen{flex:1;overflow-y:auto;padding:14px 16px 20px;background:var(--white)}
+.screen::-webkit-scrollbar{width:0}
+
+.card{background:var(--surface);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.card.plain{background:var(--white);border:1px solid var(--line)}
+.card h3{margin:0 0 8px;font-size:15px;font-weight:650}
+.k{font-size:12.5px;color:var(--muted)}
+.big{font-size:30px;font-weight:680;letter-spacing:-.02em;line-height:1.1}
+
+/* гребёнка позиций — фирменный элемент */
+.comb{display:flex;align-items:flex-end;gap:2px;height:34px;margin:12px 0 8px}
+.comb i{flex:1;border-radius:2px;background:var(--hold);height:14px;display:block}
+.comb i.up{background:var(--up)}
+.comb i.down{background:var(--down)}
+.comb i.me{height:32px;background:var(--ink);position:relative}
+.comb-legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.comb-legend span{display:flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:3px;display:inline-block}
+
+.action{
+  display:flex;gap:10px;align-items:flex-start;padding:13px 14px;border-radius:var(--radius);
+  background:#FFF3EF;border:1px solid #F6D3C7;font-size:14px;line-height:1.4;margin-bottom:12px;
+}
+.action.calm{background:#EEF5EF;border-color:#CFE3D4}
+.action b{font-weight:650}
+
+.split{display:flex;gap:10px}
+.split>div{flex:1}
+
+.meter{height:8px;border-radius:4px;background:#DCE4DD;overflow:hidden;display:flex;margin-top:8px}
+.meter span{display:block;height:100%}
+.meter .a{background:var(--ink)}
+.meter .b{background:var(--sun)}
+.legend{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+
+.weeks{display:flex;gap:5px;margin-top:10px}
+.weeks i{flex:1;height:26px;border-radius:6px;background:#DCE4DD}
+.weeks i.on{background:var(--ink)}
+.weeks i.miss{background:#F0D9D4}
+
+.season{display:flex;gap:6px;margin:10px 0 4px}
+.season i{flex:1;height:34px;border-radius:8px;border:1.5px dashed #C6D2C8;background:transparent}
+.season i.on{background:var(--ink);border:1.5px solid var(--ink)}
+.season i.leaving{background:#DCE4DD;border:1.5px solid #B9C6BC}
+
+.rowlink{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 14px;
+  border:1px solid var(--line);border-radius:var(--radius);background:var(--white);
+  font:inherit;color:var(--ink);cursor:pointer;margin-bottom:10px;
+}
+.rowlink .t{font-size:14.5px;font-weight:600}
+.rowlink .s{font-size:12.5px;color:var(--muted);margin-top:2px}
+.rowlink .go{margin-left:auto;color:var(--muted);font-size:20px;line-height:1}
+
+/* рейтинг */
+.zone-head{display:flex;gap:6px;margin-bottom:10px}
+.zone-head div{flex:1;border-radius:10px;padding:8px 9px;font-size:12px;line-height:1.25}
+.zone-head .z1{background:#E6F1E9;color:#1F5B39}
+.zone-head .z2{background:var(--surface);color:var(--ink-soft)}
+.zone-head .z3{background:#FBEAE7;color:#96382D}
+.zone-head b{display:block;font-size:15px;font-weight:680}
+
+.sep{display:flex;align-items:center;gap:8px;margin:12px 2px 8px;font-size:11.5px;color:var(--muted)}
+.sep::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:11px}
+.row .pos{width:26px;font-size:13px;color:var(--muted);text-align:right}
+.row .nick{font-size:14px;flex:1}
+.row .pts{font-size:14px;font-weight:620}
+.row.me{background:var(--ink);color:#fff}
+.row.me .pos,.row.me .nick{color:#C6D9CC}
+.row.me .nick{font-weight:620;color:#fff}
+.row.zoneup .pts{color:var(--up)}
+.row.zonedown .pts{color:var(--down)}
+
+/* условия */
+.slots{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.slot{padding:8px 11px;border-radius:10px;background:var(--ink);color:#fff;font-size:13px}
+.slot.empty{background:transparent;border:1.5px dashed #C0CEC4;color:var(--muted)}
+.slot.fresh{background:var(--up)}
+.cmp{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cmp:last-child{border-bottom:0}
+.cmp .now{color:var(--muted)}
+.cmp .next{font-weight:640}
+
+.thr{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:flex-start}
+.thr:last-child{border-bottom:0}
+.thr .n{width:22px;height:22px;border-radius:7px;background:#DCE4DD;color:var(--ink);font-size:12px;font-weight:660;display:flex;align-items:center;justify-content:center;flex:0 0 22px}
+.thr.done .n{background:var(--ink);color:#fff}
+.thr.done .txt{color:var(--ink)}
+.thr .txt{color:var(--muted);line-height:1.35}
+
+.btn{
+  display:block;width:100%;padding:13px;border-radius:13px;border:0;background:var(--ink);color:#fff;
+  font:inherit;font-size:15px;font-weight:620;cursor:pointer;margin-top:12px;
+}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn[disabled]{background:#DCE4DD;color:var(--muted);cursor:default}
+
+.sub{border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:4px}
+.sub ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+
+.hint{font-size:12.5px;color:var(--muted);line-height:1.5;margin:8px 2px 0}
+
+/* табы */
+.tabs{display:flex;border-top:1px solid var(--line);background:var(--white)}
+.tab{
+  flex:1;padding:11px 4px 16px;border:0;background:transparent;font:inherit;font-size:12px;
+  color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;
+}
+.tab .mark{width:20px;height:3px;border-radius:2px;background:transparent}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:620}
+.tab[aria-selected="true"] .mark{background:var(--ink)}
+
+.empty-state{padding:18px 14px;border-radius:var(--radius);background:var(--surface);font-size:14px;line-height:1.5}
+.empty-state b{display:block;margin-bottom:5px;font-weight:650}
+
+@media (prefers-reduced-motion:no-preference){
+  .screen{scroll-behavior:smooth}
+}
+@media (max-width:860px){
+  .phone{width:100%;flex-basis:auto;height:760px;border-radius:24px}
+  .rail{max-width:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-head">
+    <h1>Лиги экономии — прототип экранов</h1>
+    <p>Четыре экрана игрового слоя поверх программы лояльности. Данные синтетические. Переключайте состояния слева и экраны — внизу телефона.</p>
+  </div>
+
+  <div class="workbench">
+    <div class="rail">
+      <h2>Состояние пользователя</h2>
+      <div id="variants"></div>
+      <p class="note">Состояния меняют содержимое всех четырёх экранов сразу: положение в группе, доступные условия, сезонный прогресс и запас пауз.</p>
+    </div>
+
+    <div class="phone">
+      <div class="status"><span>9:41</span><span>Пятёрочка</span></div>
+      <div class="app-head" id="head"></div>
+      <div class="screen" id="screen"></div>
+      <div class="tabs" id="tabs"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const LEAGUES = [
+  ["Бронзовая","#9CB8A6"],["Серебряная","#8FAF9C"],["Золотая","#82A692"],["Платиновая","#759D88"],
+  ["Рубиновая","#68947E"],["Изумрудная","#5B8B74"],["Сапфировая","#4E826A"],["Аметистовая","#417960"],
+  ["Обсидиановая","#347056"],["Жемчужная","#27674C"],["Алмазная","#12271F"]
+];
+
+const NICKS = ["Три пакета","Утренний кофе","Пингвин","Сырники","Лимон и мята","Ночной рейс","Пломбир",
+  "Гречка","Тётя Соня","Кот на кассе","Овсянка","Сливочный","Батон","Ранняя пташка","Малина",
+  "Хрустик","Зелёный чай","Пятница","Форель","Сгущёнка","Багет","Пекан","Мандарин","Кефир","Фундук"];
+
+const VARIANTS = {
+  normal:{
+    label:"Обычное", hint:"Середина месяца, зона удержания",
+    league:4, place:12, group:26, up:5, down:9, points:428, sum:212, reg:216,
+    trips:9, streak:5, weeks:[1,1,1,1,0], season:4, pauses:1, weeksToPause:5, daysLeft:9,
+    cats:["Молочное","Мясо и птица","Овощи","Кофе и чай","Бытовая химия"], favs:["Творог 5%","Кофе зерновой"]
+  },
+  danger:{
+    label:"Зона вылета", hint:"Три дня до итогов, ниже границы",
+    league:4, place:21, group:26, up:5, down:9, points:301, sum:168, reg:133,
+    trips:5, streak:1, weeks:[1,0,1,0,0], season:3, pauses:1, weeksToPause:11, daysLeft:3,
+    cats:["Молочное","Мясо и птица","Овощи","Кофе и чай","Бытовая химия"], favs:["Творог 5%","Кофе зерновой"]
+  },
+  newbie:{
+    label:"Новичок", hint:"Первый месяц, бронзовая лига",
+    league:0, place:19, group:30, up:8, down:0, points:64, sum:36, reg:28,
+    trips:2, streak:1, weeks:[0,0,1,1,0], season:0, pauses:0, weeksToPause:11, daysLeft:22,
+    cats:[], favs:[]
+  },
+  pause:{
+    label:"Пауза активна", hint:"Месяц не учитывается, лига сохранена",
+    league:4, place:null, group:26, up:5, down:9, points:0, sum:0, reg:0,
+    trips:0, streak:0, weeks:[0,0,0,0,0], season:4, pauses:0, weeksToPause:12, daysLeft:14,
+    cats:["Молочное","Мясо и птица","Овощи","Кофе и чай","Бытовая химия"], favs:["Творог 5%","Кофе зерновой"]
+  },
+  results:{
+    label:"Итоги месяца", hint:"Повышение из платиновой в рубиновую",
+    league:4, place:3, group:28, up:6, down:8, points:512, sum:249, reg:263,
+    trips:13, streak:7, weeks:[1,1,1,1,1], season:5, pauses:2, weeksToPause:1, daysLeft:0,
+    promoted:true, cats:["Молочное","Мясо и птица","Овощи","Кофе и чай"], favs:["Творог 5%","Кофе зерновой"]
+  }
+};
+
+const SCREENS = [
+  ["league","Моя лига"],["group","Группа"],["terms","Условия"],["season","Сезон"]
+];
+
+let cur = "normal", tab = "league";
+const v = () => VARIANTS[cur];
+
+/* ---------- шапка ---------- */
+function renderHead(){
+  const d = v(), [name,color] = LEAGUES[d.league];
+  const right = d.daysLeft === 0
+    ? `<span>месяц закрыт</span><b>итоги</b>`
+    : `<span>до итогов</span><b>${d.daysLeft} ${plural(d.daysLeft,"день","дня","дней")}</b>`;
+  document.getElementById("head").innerHTML = `
+    <div class="league-line">
+      <div class="badge" style="background:${color}"></div>
+      <div>
+        <div class="league-name">${name} лига</div>
+        <div class="league-sub">${d.league+1}-я из 11</div>
+      </div>
+      <div class="countdown">${right}</div>
+    </div>`;
+}
+
+function plural(n,a,b,c){
+  const m = n%100, k = n%10;
+  if(m>10&&m<20) return c;
+  if(k===1) return a;
+  if(k>=2&&k<=4) return b;
+  return c;
+}
+
+/* ---------- гребёнка ---------- */
+function comb(d){
+  let out = "";
+  for(let i=1;i<=d.group;i++){
+    let cls = i<=d.up ? "up" : (i>d.group-d.down ? "down" : "");
+    if(i===d.place) cls += " me";
+    out += `<i class="${cls}"></i>`;
+  }
+  return `<div class="comb">${out}</div>
+    <div class="comb-legend">
+      <span><i class="dot" style="background:var(--up)"></i>вверх: ${d.up}</span>
+      <span><i class="dot" style="background:var(--hold)"></i>остаются: ${d.group-d.up-d.down}</span>
+      ${d.down?`<span><i class="dot" style="background:var(--down)"></i>вылет: ${d.down}</span>`:`<span>вылета нет</span>`}
+    </div>`;
+}
+
+/* ---------- экран 1 ---------- */
+function screenLeague(){
+  const d = v();
+  if(cur==="pause"){
+    return `
+      <div class="empty-state"><b>Пауза до 1 апреля</b>
+        Этот месяц не считается пропуском. Рубиновая лига сохраняется, очки не начисляются, места в группе вы не занимаете.</div>
+      <div class="card" style="margin-top:12px">
+        <div class="k">Что продолжает действовать</div>
+        <div style="font-size:14.5px;line-height:1.5;margin-top:6px">Условия рубиновой лиги и сезонные бонусы работают весь месяц. Накопление следующей паузы приостановлено.</div>
+      </div>
+      ${linkTerms(d)}${linkSeason(d)}`;
+  }
+  if(cur==="results"){
+    return `
+      <div class="empty-state"><b>Вы поднялись в рубиновую лигу</b>
+        3 место из 28 в платиновой группе. С 1 марта действуют новые условия: пятая категория кэшбэка и лимит ×1,4.</div>
+      <div class="card" style="margin-top:12px">
+        <div class="k">Итог месяца</div>
+        <div class="big" style="margin-top:4px">512 очков</div>
+        <div class="meter"><span class="a" style="width:${pct(d.sum,d.points)}%"></span><span class="b" style="width:${pct(d.reg,d.points)}%"></span></div>
+        <div class="legend"><span>за сумму — ${d.sum}</span><span>за регулярность — ${d.reg}</span></div>
+      </div>
+      <button class="btn">Посмотреть новые условия</button>
+      <p class="hint">Следующая группа собирается 1 марта. В рубиновой лиге 26 участников: пятеро поднимаются, девять вылетают.</p>`;
+  }
+
+  const inDanger = d.place > d.group - d.down;
+  const inUp = d.place <= d.up;
+  const action = cur==="newbie"
+    ? `<div class="action calm">В бронзовой лиге никто не вылетает. Восемь первых мест переходят в серебряную — <b>вам нужно ещё 3 похода</b>, чтобы попасть в эту зону.</div>`
+    : inDanger
+      ? `<div class="action">До безопасной зоны 46 очков. <b>Два похода до конца месяца</b> закроют разрыв.</div>`
+      : inUp
+        ? `<div class="action calm">Вы в зоне повышения. <b>Держите ещё один поход в неделю</b>, чтобы остаться в ней до итогов.</div>`
+        : `<div class="action calm">До зоны повышения 74 очка. <b>Ещё один поход на этой неделе</b> — и вы подниметесь на три места.</div>`;
+
+  return `
+    <div class="card">
+      <div class="k">Место в группе</div>
+      <div class="big">${d.place} из ${d.group}</div>
+      ${comb(d)}
+    </div>
+    ${action}
+    <div class="card">
+      <div class="k">Очки за месяц</div>
+      <div class="big" style="margin-top:2px">${d.points}</div>
+      <div class="meter"><span class="a" style="width:${pct(d.sum,d.points)}%"></span><span class="b" style="width:${pct(d.reg,d.points)}%"></span></div>
+      <div class="legend"><span>за сумму — ${d.sum}</span><span>за регулярность — ${d.reg}</span></div>
+    </div>
+    <div class="split">
+      <div class="card"><div class="k">Походов в магазин</div><div class="big">${d.trips}</div></div>
+      <div class="card"><div class="k">Недель подряд</div><div class="big">${d.streak}</div></div>
+    </div>
+    <div class="card">
+      <div class="k">Недели этого месяца</div>
+      <div class="weeks">${d.weeks.map(w=>`<i class="${w?"on":"miss"}"></i>`).join("")}</div>
+    </div>
+    ${linkTerms(d)}${linkSeason(d)}`;
+}
+
+function pct(part,total){ return total ? Math.round(part/total*100) : 0 }
+
+function linkTerms(d){
+  const pack = PACKS[d.league];
+  return `<button class="rowlink" onclick="go('terms')">
+    <div><div class="t">Мои условия</div><div class="s">${pack.cats} ${plural(pack.cats,"категория","категории","категорий")} кэшбэка, лимит ×${pack.limit}</div></div>
+    <span class="go">›</span></button>`;
+}
+function linkSeason(d){
+  return `<button class="rowlink" onclick="go('season')">
+    <div><div class="t">Сезон и паузы</div><div class="s">${d.season} из 6 знаков, пауз в запасе: ${d.pauses}</div></div>
+    <span class="go">›</span></button>`;
+}
+
+/* ---------- экран 2 ---------- */
+function screenGroup(){
+  const d = v();
+  if(cur==="pause"){
+    return `<div class="empty-state"><b>В этом месяце вы не участвуете</b>
+      Пауза активна, места в группе вы не занимаете. Таблица вернётся 1 апреля.</div>`;
+  }
+  const rows = [];
+  let pts = 640;
+  for(let i=1;i<=d.group;i++){
+    const isMe = i===d.place;
+    pts = i===1 ? 640 : pts - (7 + (i*3)%11);
+    const zone = i<=d.up ? "zoneup" : (i>d.group-d.down ? "zonedown" : "");
+    if(i===d.up+1) rows.push(`<div class="sep">остаются в лиге</div>`);
+    if(d.down && i===d.group-d.down+1) rows.push(`<div class="sep">вылетают в лигу ниже</div>`);
+    rows.push(`<div class="row ${zone} ${isMe?"me":""}">
+      <span class="pos">${i}</span>
+      <span class="nick">${isMe?"Вы":NICKS[(i*7)%NICKS.length]}</span>
+      <span class="pts">${isMe?d.points:pts}</span>
+    </div>`);
+  }
+  return `
+    <div class="zone-head">
+      <div class="z1"><b>${d.up}</b>поднимаются</div>
+      <div class="z2"><b>${d.group-d.up-d.down}</b>остаются</div>
+      <div class="z3"><b>${d.down||"—"}</b>вылетают</div>
+    </div>
+    <div class="sep">переходят в лигу выше</div>
+    ${rows.join("")}
+    <p class="hint">Группа собрана из покупателей с похожей частотой покупок и размером корзины. Состав меняется каждый месяц. Имена и адреса участников не показываются.</p>`;
+}
+
+/* ---------- экран 3 ---------- */
+const PACKS = [
+  {cats:3,limit:"1,0",favs:0},{cats:3,limit:"1,1",favs:1},{cats:4,limit:"1,2",favs:1},{cats:4,limit:"1,3",favs:2},
+  {cats:5,limit:"1,4",favs:2},{cats:5,limit:"1,5",favs:3},{cats:6,limit:"1,6",favs:3},{cats:6,limit:"1,8",favs:4},
+  {cats:7,limit:"2,0",favs:4},{cats:7,limit:"2,2",favs:5},{cats:8,limit:"2,5",favs:6}
+];
+
+function screenTerms(){
+  const d = v(), p = PACKS[d.league], nx = PACKS[Math.min(d.league+1,10)];
+  const catSlots = [];
+  for(let i=0;i<p.cats;i++){
+    const fresh = cur==="results" && i===p.cats-1;
+    catSlots.push(d.cats[i]
+      ? `<span class="slot ${fresh?"fresh":""}">${d.cats[i]}</span>`
+      : `<span class="slot empty">${fresh?"новый слот":"выбрать"}</span>`);
+  }
+  const favSlots = [];
+  for(let i=0;i<p.favs;i++){
+    favSlots.push(d.favs[i] ? `<span class="slot">${d.favs[i]}</span>` : `<span class="slot empty">выбрать товар</span>`);
+  }
+  const unset = d.cats.length < p.cats;
+
+  return `
+    ${unset ? `<div class="action">Категории на этот месяц не выбраны. Кэшбэк начнёт начисляться с первой покупки после выбора.</div>` : ""}
+    <div class="card">
+      <div class="k">Действует в этом месяце</div>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <div><div class="big">${p.cats}</div><div class="k">категорий</div></div>
+        <div><div class="big">×${p.limit}</div><div class="k">лимит</div></div>
+        <div><div class="big">${p.favs}</div><div class="k">товара</div></div>
+      </div>
+    </div>
+    <div class="card plain">
+      <h3>Категории кэшбэка</h3>
+      <div class="slots">${catSlots.join("")}</div>
+      ${d.season>=5 ? `<p class="hint">Одна из категорий держится на сезонном прогрессе, а не на лиге. При пропуске месяца она уйдёт первой.</p>`:""}
+    </div>
+    ${p.favs ? `<div class="card plain">
+      <h3>Любимые товары со скидкой</h3>
+      <div class="slots">${favSlots.join("")}</div>
+    </div>` : `<div class="card plain"><h3>Любимые товары</h3><p class="hint">Открываются с серебряной лиги.</p></div>`}
+    <div class="card plain">
+      <h3>В следующей лиге</h3>
+      <div class="cmp"><span class="now">Категорий кэшбэка ${p.cats}</span><span class="next">${nx.cats}</span></div>
+      <div class="cmp"><span class="now">Лимит ×${p.limit}</span><span class="next">×${nx.limit}</span></div>
+      <div class="cmp"><span class="now">Товаров со скидкой ${p.favs}</span><span class="next">${nx.favs}</span></div>
+    </div>
+    <button class="btn ${unset?'':'ghost'}">${unset?"Выбрать категории":"Изменить категории"}</button>`;
+}
+
+/* ---------- экран 4 ---------- */
+function screenSeason(){
+  const d = v();
+  const cells = [];
+  for(let i=0;i<6;i++){
+    const on = i < d.season;
+    const leaving = on && i===0 && d.season>0;
+    cells.push(`<i class="${leaving?"leaving":(on?"on":"")}"></i>`);
+  }
+  const thresholds = [
+    [3,"Дополнительный товар со скидкой"],
+    [4,"Повышенный лимит кэшбэка сверх лиги"],
+    [5,"Дополнительная категория кэшбэка"],
+    [6,"Все три бонуса и защита лиги при одном неудачном месяце"]
+  ];
+  return `
+    <div class="card">
+      <div class="k">Сезонный прогресс</div>
+      <div class="big" style="margin-top:2px">${d.season} из 6</div>
+      <div class="season">${cells.join("")}</div>
+      <p class="hint">${d.season ? "Серая ячейка выпадет из окна в конце месяца — на её место встанет результат этого месяца." : "Знак начисляется за каждый месяц, в котором вы не опустились в лигу ниже."}</p>
+    </div>
+    <div class="card plain">
+      <h3>Что открывают знаки</h3>
+      ${thresholds.map(([n,t])=>`<div class="thr ${d.season>=n?"done":""}"><span class="n">${n}</span><span class="txt">${t}</span></div>`).join("")}
+    </div>
+    <div class="card">
+      <div class="k">Паузы</div>
+      <div style="display:flex;gap:20px;margin-top:6px">
+        <div><div class="big">${d.pauses}</div><div class="k">в запасе</div></div>
+        <div><div class="big">${d.weeksToPause}</div><div class="k">${plural(d.weeksToPause,"неделя","недели","недель")} до следующей</div></div>
+      </div>
+      <button class="btn" ${d.pauses?"":"disabled"}>${cur==="pause"?"Пауза уже стоит на этот месяц":"Поставить паузу на следующий месяц"}</button>
+      <p class="hint">Пауза ставится заранее на календарный месяц: он не считается пропуском, лига сохраняется, очки не начисляются. Одна пауза даётся за 12 активных недель подряд, в запасе не больше двух. Пока пауза действует, накопление следующей стоит на месте.</p>
+    </div>
+    <div class="sub">
+      <h3 style="margin:0 0 2px;font-size:15px">Подписка</h3>
+      <div class="k">Не даёт паузы сама по себе — меняет их запас и удобство</div>
+      <ul>
+        <li>в запасе до 4 пауз вместо 2</li>
+        <li>пауза за 8 активных недель вместо 12</li>
+        <li>дополнительная категория кэшбэка сверх лиги</li>
+        <li>ранний выбор категорий на следующий месяц</li>
+        <li>замена набора любимых товаров в середине месяца</li>
+      </ul>
+      <button class="btn ghost">Подробнее о подписке</button>
+    </div>`;
+}
+
+/* ---------- каркас ---------- */
+function go(t){ tab = t; render(); }
+
+function render(){
+  renderHead();
+  const body = {league:screenLeague,group:screenGroup,terms:screenTerms,season:screenSeason}[tab]();
+  const s = document.getElementById("screen");
+  s.innerHTML = body; s.scrollTop = 0;
+
+  document.getElementById("tabs").innerHTML = SCREENS.map(([id,label])=>
+    `<button class="tab" role="tab" aria-selected="${tab===id}" onclick="go('${id}')">
+      <span class="mark"></span>${label}</button>`).join("");
+
+  document.getElementById("variants").innerHTML = Object.entries(VARIANTS).map(([id,d])=>
+    `<button class="chip" aria-pressed="${cur===id}" onclick="setVariant('${id}')">
+      ${d.label}<small>${d.hint}</small></button>`).join("");
+}
+
+function setVariant(id){ cur = id; render(); }
+
+render();
+</script>
+</body>
+</html>
