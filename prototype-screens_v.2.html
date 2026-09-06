@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лиги экономии — прототип</title>
+<style>
+:root{
+  --green-dark:#0A5A2B;
+  --green:#137A3C;
+  --green-mid:#1E8C48;
+  --green-light:#3ECF62;
+  --red:#E31E24;
+  --ink:#1F1F1F;
+  --ink-2:#5B6660;
+  --line:#E6EAE7;
+  --grey:#F1F3F1;
+  --white:#fff;
+  --up:#1E8C48;
+  --down:#E31E24;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:#DCE4DE;color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
+}
+.page{max-width:1100px;margin:0 auto;padding:26px 18px 50px}
+h1.t{font-size:23px;margin:0 0 5px;letter-spacing:-.02em}
+.sub{margin:0 0 20px;color:#4C5A52;font-size:14px}
+.bench{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+
+.rail{flex:1 1 250px;max-width:320px;min-width:240px}
+.rail h2{font-size:12px;margin:0 0 9px;color:#4C5A52;text-transform:uppercase;letter-spacing:.06em}
+.chip{display:block;width:100%;text-align:left;margin-bottom:7px;padding:11px 13px;border:1px solid #CFD8D2;
+  border-radius:14px;background:#fff;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
+.chip small{display:block;color:#6B776F;font-size:12px;margin-top:2px;line-height:1.35}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:#fff}
+.chip[aria-pressed="true"] small{color:#BFE3CB}
+.hintbox{margin-top:14px;font-size:12.5px;color:#4C5A52;line-height:1.5}
+
+/* ——— телефон ——— */
+.phone{flex:0 0 390px;width:390px;height:830px;background:#fff;border-radius:36px;
+  border:1px solid #C3CDC6;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.statusbar{height:24px;display:flex;justify-content:space-between;align-items:center;
+  padding:0 20px;font-size:11px;color:#fff;background:var(--green-dark)}
+
+.hero{background:linear-gradient(180deg,var(--green-dark) 0%,var(--green) 55%,var(--green-mid) 100%);
+  color:#fff;padding:8px 16px 20px;position:relative}
+.hero-top{display:flex;align-items:center;gap:10px;height:38px}
+.back{width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;
+  font-size:19px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.hero-title{flex:1;text-align:center;font-size:17px;font-weight:700}
+.hero-top .spacer{width:32px}
+
+/* степпер как в приложении */
+.stepper{display:flex;align-items:flex-start;margin:14px 4px 4px}
+.stepper .st{flex:1;text-align:center;position:relative}
+.stepper .st::before{content:"";position:absolute;top:9px;left:-50%;width:100%;height:3px;background:rgba(255,255,255,.22)}
+.stepper .st:first-child::before{display:none}
+.stepper .st.done::before{background:var(--green-light)}
+.stepper i{display:block;width:21px;height:21px;border-radius:50%;margin:0 auto 7px;
+  background:rgba(255,255,255,.22);position:relative;z-index:1}
+.stepper .st.done i{background:rgba(255,255,255,.35)}
+.stepper .st.now i{background:#fff}
+.stepper .st.now i::after{content:"";position:absolute;inset:5px;border-radius:50%;background:var(--green-light)}
+.stepper span{font-size:12.5px;color:rgba(255,255,255,.66)}
+.stepper .st.now span{color:#fff;font-weight:700}
+
+.glass{background:rgba(255,255,255,.15);border-radius:20px;padding:15px 16px;margin-top:14px}
+.glass .lbl{font-size:13.5px;color:rgba(255,255,255,.82)}
+.glass .big{font-size:34px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.glass .note{font-size:12.5px;color:rgba(255,255,255,.75);margin-top:4px;line-height:1.35}
+.wbtn{display:block;width:100%;margin-top:13px;padding:13px;border:0;border-radius:16px;background:#fff;
+  color:var(--green);font:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.badge-league{display:flex;align-items:center;gap:11px}
+.gem{width:44px;height:44px;flex:0 0 44px}
+
+/* ——— белая шторка ——— */
+.sheet{flex:1;overflow-y:auto;background:#fff;border-radius:24px 24px 0 0;margin-top:-14px;
+  position:relative;padding:16px 16px 22px}
+.sheet::-webkit-scrollbar{width:0}
+.pills{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
+.pills::-webkit-scrollbar{display:none}
+.pill{border:0;border-radius:22px;padding:10px 16px;background:var(--grey);color:var(--ink);
+  font:inherit;font-size:14px;white-space:nowrap;cursor:pointer}
+.pill[aria-selected="true"]{background:#2B2B2B;color:#fff;font-weight:600}
+
+.card{background:var(--grey);border-radius:18px;padding:14px;margin-bottom:11px}
+.card.plain{background:#fff;border:1px solid var(--line)}
+.card h3{margin:0 0 9px;font-size:15.5px;font-weight:700}
+.k{font-size:12.5px;color:var(--ink-2)}
+.big{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.row2{display:flex;gap:11px}
+.row2>*{flex:1}
+
+.action{display:flex;gap:10px;padding:13px 14px;border-radius:18px;background:#FFF0F0;
+  border:1px solid #FBD5D5;font-size:14px;line-height:1.4;margin-bottom:11px}
+.action.calm{background:#EAF6ED;border-color:#C9E7D3}
+.action b{font-weight:700}
+
+.comb{display:flex;align-items:flex-end;gap:2px;height:30px;margin:11px 0 7px}
+.comb i{flex:1;height:13px;border-radius:2px;background:#CBD5CE}
+.comb i.up{background:var(--up)}
+.comb i.down{background:var(--down)}
+.comb i.me{height:28px;background:#2B2B2B}
+.legend{display:flex;gap:13px;font-size:12px;color:var(--ink-2)}
+.legend span{display:flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:3px}
+
+.meter{height:8px;border-radius:5px;background:#DDE3DF;display:flex;overflow:hidden;margin-top:8px}
+.meter span{height:100%}
+.meter .a{background:#2B2B2B}
+.meter .b{background:var(--green-light)}
+.mrow{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:6px}
+
+.weeks{display:flex;gap:5px;margin-top:9px}
+.weeks i{flex:1;height:24px;border-radius:7px;background:#DDE3DF}
+.weeks i.on{background:var(--green)}
+.weeks i.miss{background:#F6DADA}
+.weeks i.now{outline:2.5px solid #2B2B2B;outline-offset:2px}
+
+.season{display:flex;gap:6px;margin:9px 0 4px}
+.season i{flex:1;height:32px;border-radius:9px;border:1.5px dashed #C7D2CB}
+.season i.on{background:var(--green);border:1.5px solid var(--green)}
+.season i.leaving{background:#DDE3DF;border:1.5px solid #C0CBC3}
+
+.rowlink{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 14px;
+  border:1px solid var(--line);border-radius:18px;background:#fff;font:inherit;color:var(--ink);
+  cursor:pointer;margin-bottom:10px}
+.rowlink .t2{font-size:14.5px;font-weight:600}
+.rowlink .s2{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.rowlink .go{margin-left:auto;color:#9AA79F;font-size:20px}
+
+.zoneline{display:flex;gap:6px;margin-bottom:11px}
+.zoneline div{flex:1;border-radius:13px;padding:9px;font-size:12px;line-height:1.25}
+.zoneline .z1{background:#EAF6ED;color:#14612F}
+.zoneline .z2{background:var(--grey);color:#4A554E}
+.zoneline .z3{background:#FDECEC;color:#A22128}
+.zoneline b{display:block;font-size:16px;font-weight:800}
+
+.sep{display:flex;align-items:center;gap:8px;margin:12px 2px 7px;font-size:11.5px;color:var(--ink-2)}
+.sep::after{content:"";flex:1;height:1px;background:var(--line)}
+.prow{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:13px}
+.prow .pos{width:24px;font-size:13px;color:var(--ink-2);text-align:right}
+.prow .nick{flex:1;font-size:14px}
+.prow .pts{font-size:14px;font-weight:700}
+.prow.me{background:#2B2B2B;color:#fff}
+.prow.me .pos{color:#B8C4BC}
+.prow.me .nick{font-weight:700}
+
+.slots{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.slot{padding:9px 12px;border-radius:13px;background:var(--green);color:#fff;font-size:13px;
+  border:0;font-family:inherit;cursor:pointer}
+.slot small{display:block;font-size:11px;color:#BFE3CB}
+.slot.empty{background:#fff;border:1.5px dashed #BCC9C1;color:var(--ink-2)}
+.slot.fresh{background:var(--green-light);color:#0A3B1D}
+.cmp{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.cmp:last-child{border-bottom:0}
+.cmp .now{color:var(--ink-2)}
+.cmp .next{font-weight:700}
+
+.thr{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.thr:last-child{border-bottom:0}
+.thr .n{width:22px;height:22px;flex:0 0 22px;border-radius:8px;background:#DDE3DF;font-size:12px;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+.thr.done .n{background:var(--green);color:#fff}
+.thr .txt{color:var(--ink-2);line-height:1.35}
+.thr.done .txt{color:var(--ink)}
+
+.rbtn{display:block;width:100%;padding:15px;border:0;border-radius:18px;background:var(--red);color:#fff;
+  font:inherit;font-size:15.5px;font-weight:700;cursor:pointer;margin-top:12px}
+.rbtn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.rbtn[disabled]{background:#DDE3DF;color:#8A958E;cursor:default}
+.hint{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin:9px 2px 0}
+.empty{padding:16px;border-radius:18px;background:var(--grey);font-size:14px;line-height:1.5}
+.empty b{display:block;margin-bottom:5px}
+
+/* лестница лиг */
+.step{display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:18px;margin-bottom:8px;
+  border:1px solid var(--line);background:#fff;position:relative;overflow:hidden}
+.step .num{width:22px;font-size:12px;color:var(--ink-2);text-align:center}
+.step .nm{font-size:15px;font-weight:600}
+.step .ps{font-size:12px;color:var(--ink-2);margin-top:2px}
+.step.passed{background:#F7F9F7}
+.step.current{background:var(--green);border-color:var(--green);color:#fff;padding:15px 12px}
+.step.current .ps{color:#C8E8D4}
+.step.current .nm{font-size:17px;font-weight:800}
+.step.fog{background:#EDF1EE}
+.step.fog .fogged{filter:blur(4.5px);opacity:.65;user-select:none}
+.step.fog .lock{margin-left:auto;font-size:12px;color:#7F8C84}
+.step .perk{font-size:12px;color:var(--ink-2);margin-top:3px}
+.step.current .perk{color:#C8E8D4}
+
+/* выбор категорий */
+.counter{position:sticky;top:-16px;z-index:5;background:#fff;padding:10px 0 12px;margin:-4px 0 6px;
+  display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+.counter .c{font-size:15px;font-weight:700}
+.counter .bar{flex:1;height:7px;border-radius:5px;background:#E4E9E5;overflow:hidden}
+.counter .bar i{display:block;height:100%;background:var(--green)}
+.grp{border:1px solid var(--line);border-radius:18px;margin-bottom:10px;overflow:hidden}
+.grp>summary{list-style:none;cursor:pointer;padding:13px 14px;display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:600}
+.grp>summary::-webkit-details-marker{display:none}
+.grp .rate{margin-left:auto;font-size:13px;font-weight:700;color:var(--green)}
+.grp .subs{padding:0 12px 12px}
+.subrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 11px;border-radius:13px;
+  border:1px solid var(--line);background:#fff;font:inherit;font-size:13.5px;cursor:pointer;margin-top:7px}
+.subrow.on{background:var(--green);border-color:var(--green);color:#fff}
+.subrow .tag{margin-left:auto;font-size:11px;color:var(--green);background:#EAF6ED;padding:3px 8px;border-radius:9px}
+.subrow.on .tag{background:rgba(255,255,255,.2);color:#fff}
+.subrow .r{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.subrow.on .r{color:#fff}
+.grp.locked{opacity:.72}
+.grp.locked>summary{cursor:default}
+.grp .lockmsg{margin-left:auto;font-size:12px;color:#7F8C84;font-weight:500}
+
+/* нижняя навигация */
+.nav{display:flex;border-top:1px solid var(--line);background:#fff;padding-bottom:6px}
+.nav button{flex:1;border:0;background:none;font:inherit;font-size:11px;color:#8A958E;padding:9px 2px 6px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+.nav button[aria-selected="true"]{color:var(--ink);font-weight:700}
+.nav svg{display:block}
+</style>
+</head>
+<body>
+<div class="page">
+  <h1 class="t">Лиги экономии — кликабельный прототип</h1>
+  <p class="sub">Четыре экрана и два вложенных окна. Данные синтетические. Состояния переключаются слева, экраны — снизу.</p>
+  <div class="bench">
+    <div class="rail">
+      <h2>Состояние участника</h2>
+      <div id="variants"></div>
+      <p class="hintbox">Тап по бейджу лиги в шапке открывает «Лиги выгоды», тап по слоту на экране «Условия» — окно выбора категорий.</p>
+    </div>
+    <div class="phone">
+      <div class="statusbar"><span>11:59</span><span>Пятёрочка</span></div>
+      <div id="hero"></div>
+      <div class="sheet" id="sheet"></div>
+      <div class="nav" id="nav"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────── данные ─────────── */
+const LEAGUES = [
+  ["Бронзовая","#A9743F"],["Серебряная","#98A3A8"],["Золотая","#D4A017"],["Платиновая","#8FA6B2"],
+  ["Рубиновая","#B02A3A"],["Изумрудная","#1E8C48"],["Сапфировая","#28518F"],["Аметистовая","#6B3FA0"],
+  ["Обсидиановая","#2B2B2B"],["Жемчужная","#C9BFA8"],["Алмазная","#5BB8D4"]
+];
+
+// размер группы, вверх, остаются, вниз
+const ZONES = [[30,8,22,0],[30,7,18,5],[30,7,16,7],[28,6,14,8],[26,5,12,9],[24,5,10,9],
+               [22,4,8,10],[20,4,7,9],[18,3,5,10],[15,2,4,9],[12,0,4,8]];
+// пул групп, слотов, лимит, любимых товаров
+const PACK = [[4,3,"1,0",0],[5,3,"1,1",0],[6,4,"1,2",0],[6,4,"1,3",0],[7,5,"1,4",1],[7,5,"1,5",1],
+              [8,6,"1,6",2],[9,6,"1,8",2],[9,7,"2,0",3],[10,7,"2,2",3],[10,7,"2,5",4]];
+
+// группы в порядке открытия: от наименее ходовых к самым ходовым
+const GROUPS = [
+  ["Готовая еда",7.5,["салаты","супы","вторые блюда","сэндвичи","выпечка к чаю","гриль"]],
+  ["Детское питание",3.0,["пюре","каши","смеси","детские снеки","соки","вода детская"]],
+  ["Заморозка",5.1,["пельмени","овощи","ягоды","мороженое","полуфабрикаты","рыба"]],
+  ["Напитки",4.9,["вода","соки","газировка","морсы","энергетики","холодный чай"]],
+  ["Кофе и чай",6.3,["кофе зерновой","кофе молотый","растворимый","чай чёрный","чай зелёный","какао"]],
+  ["Сладости",5.9,["шоколад","печенье","конфеты","зефир","вафли","мармелад"]],
+  ["Хлеб",4.3,["батоны","бездрожжевой","лаваш","булочки","хлебцы","тосты"]],
+  ["Бытовая химия",6.9,["стирка","посуда","уборка","бумага","гигиена","освежители"]],
+  ["Бакалея",3.9,["крупы","макароны","масло","консервы","специи","мука и сахар"]],
+  ["Мясо и птица",3.9,["курица","свинина","говядина","фарш","колбасы","сосиски"]],
+  ["Овощи и фрукты",5.5,["овощи","фрукты","зелень","ягоды","цитрусы","салаты готовые"]],
+  ["Молочное",3.5,["молоко","йогурты","творог","сыры","сметана","сливочное масло"]]
+];
+
+const NICKS = ["Три пакета","Утренний кофе","Пингвин","Сырники","Лимон и мята","Ночной рейс","Пломбир",
+ "Гречка","Тётя Соня","Кот на кассе","Овсянка","Сливочный","Батон","Ранняя пташка","Малина","Хрустик",
+ "Зелёный чай","Пятница","Форель","Сгущёнка","Багет","Пекан","Мандарин","Кефир","Фундук","Компот"];
+
+const VARIANTS = {
+  normal:{label:"Обычное",hint:"9-я лига, середина месяца, зона удержания",
+    league:8,place:7,points:604,sum:301,reg:303,trips:11,streak:6,weeks:[1,1,1,1,0],
+    season:4,pauses:1,toPause:5,days:9,curWeek:4,
+    picked:["готовая еда:салаты","кофе и чай:кофе зерновой","бытовая химия:стирка","сладости:шоколад","хлеб:батоны","заморозка:пельмени","напитки:вода"],
+    favs:["Творог 5%","Кофе зерновой","Стиральный порошок"]},
+  danger:{label:"Зона понижения",hint:"три дня до конца месяца, ниже границы",
+    league:8,place:15,points:388,sum:214,reg:174,trips:6,streak:1,weeks:[1,0,1,0,0],
+    season:3,pauses:1,toPause:11,days:3,curWeek:4,
+    picked:["готовая еда:салаты","кофе и чай:кофе зерновой","бытовая химия:стирка","сладости:шоколад","хлеб:батоны","заморозка:пельмени","напитки:вода"],
+    favs:["Творог 5%","Кофе зерновой","Стиральный порошок"]},
+  newbie:{label:"Новичок",hint:"первый месяц, бронзовая лига",
+    league:0,place:19,points:64,sum:36,reg:28,trips:2,streak:1,weeks:[0,0,1,1,0],
+    season:0,pauses:0,toPause:11,days:22,curWeek:4,picked:[],favs:[]},
+  pause:{label:"Пауза активна",hint:"месяц не учитывается, лига сохранена",
+    league:8,place:null,points:0,sum:0,reg:0,trips:0,streak:0,weeks:[0,0,0,0,0],
+    season:4,pauses:0,toPause:12,days:14,curWeek:4,
+    picked:["готовая еда:салаты","кофе и чай:кофе зерновой","бытовая химия:стирка","сладости:шоколад","хлеб:батоны","заморозка:пельмени","напитки:вода"],
+    favs:["Творог 5%","Кофе зерновой","Стиральный порошок"]},
+  results:{label:"Итоги месяца",hint:"повышение в 9-ю лигу, новый слот открыт",
+    league:8,place:3,points:712,sum:349,reg:363,trips:14,streak:8,weeks:[1,1,1,1,1],
+    season:5,pauses:2,toPause:1,days:0,promoted:true,curWeek:null,
+    picked:["готовая еда:салаты","кофе и чай:кофе зерновой","бытовая химия:стирка","сладости:шоколад","хлеб:батоны","заморозка:пельмени"],
+    favs:["Творог 5%","Кофе зерновой","Стиральный порошок"]}
+};
+
+const SCREENS = [["league","Лига"],["group","Группа"],["terms","Условия"],["season","Сезон"]];
+let cur="normal", tab="league", picked=null;
+const v = ()=>VARIANTS[cur];
+const pl = (n,a,b,c)=>{const m=n%100,k=n%10;return m>10&&m<20?c:k===1?a:(k>=2&&k<=4?b:c)};
+
+function gem(color,size){
+  const s=size||44;
+  return `<svg class="gem" width="${s}" height="${s}" viewBox="0 0 44 44" aria-hidden="true">
+    <path d="M22 3 L38 13 L38 31 L22 41 L6 31 L6 13 Z" fill="${color}"/>
+    <path d="M22 3 L38 13 L22 21 L6 13 Z" fill="#fff" opacity=".22"/>
+    <path d="M22 21 L38 13 L38 31 Z" fill="#000" opacity=".13"/></svg>`;
+}
+
+/* ─────────── шапка ─────────── */
+function hero(){
+  const d=v(), [name,color]=LEAGUES[d.league], z=ZONES[d.league];
+  const modal = tab==="ladder" || tab==="picker";
+  const title = {league:"Ваша лига",group:"Ваша группа",terms:"Ваша выгода",season:"Сезон и паузы",
+                 ladder:"Лиги выгоды",picker:"Выбор категорий"}[tab];
+  let top = `<div class="hero-top">
+      ${modal?`<button class="back" onclick="go('${tab==="ladder"?"league":"terms"}')" aria-label="Назад">‹</button>`:`<span class="spacer"></span>`}
+      <div class="hero-title">${title}</div><span class="spacer"></span></div>`;
+
+  if(modal){
+    const sub = tab==="ladder"
+      ? `Вы на ${d.league+1}-й лиге из 11`
+      : `Выберите ${PACK[d.league][1]} ${pl(PACK[d.league][1],"подкатегорию","подкатегории","подкатегорий")} на месяц`;
+    return top+`<div class="glass" style="margin-top:10px"><div class="lbl">${sub}</div></div>`;
+  }
+
+  // степпер зоны
+  const zone = d.place===null ? "пауза"
+    : d.place<=z[1] ? "up" : (z[3] && d.place>z[0]-z[3] ? "down" : "hold");
+  const steps=[["up","Повышение"],["hold","Сохранение"],["down","Понижение"]];
+  const idx=steps.findIndex(s=>s[0]===zone);
+  const stepper = `<div class="stepper">`+steps.map((s,i)=>
+      `<div class="st ${i===idx?"now":""}"><i></i><span>${s[1]}</span></div>`).join("")+`</div>`;
+
+  let card;
+  if(tab==="league"){
+    card = `<button class="glass" style="width:100%;text-align:left;border:0;font:inherit;color:#fff;cursor:pointer" onclick="go('ladder')">
+        <div class="badge-league">${gem(color)}
+          <div><div style="font-size:19px;font-weight:800">${name} лига</div>
+          <div class="note" style="margin:0">${d.league+1}-я лига из 11 · открыть лиги выгоды ›</div></div></div>
+      </button>`+ (d.place!==null?stepper:"");
+  } else if(tab==="group"){
+    card = `<div class="glass"><div class="lbl">Место в группе</div>
+      <div class="big">${d.place===null?"—":d.place+" из "+z[0]}</div>
+      <div class="note">Группа собрана из покупателей с похожей частотой покупок и размером корзины</div></div>`;
+  } else if(tab==="terms"){
+    const p=PACK[d.league];
+    card = `<div class="glass"><div class="lbl">Ваш кэшбэк в этом месяце</div>
+      <div class="big">${p[1]} ${pl(p[1],"категория","категории","категорий")}</div>
+      <div class="note">Лимит кэшбэка ×${p[2]} · любимых товаров: ${p[3]}</div>
+      <button class="wbtn" onclick="go('picker')">Выбрать категории с кэшбэком</button></div>`;
+  } else {
+    card = `<div class="glass"><div class="lbl">Сезонный прогресс</div>
+      <div class="big">${d.season} из 6</div>
+      <div class="note">Пауз в запасе: ${d.pauses}</div></div>`;
+  }
+  const right = d.days===0?`<b>итоги</b>`:`<b>${d.days} ${pl(d.days,"день","дня","дней")}</b>`;
+  return top+card+`<div class="note" style="text-align:center;margin-top:12px;font-size:12.5px;color:rgba(255,255,255,.8)">
+      ${d.days===0?"месяц закрыт":"до окончания месяца"} ${right}</div>`;
+}
+
+/* ─────────── экран 1 ─────────── */
+function scLeague(){
+  const d=v(), z=ZONES[d.league], p=PACK[d.league];
+  if(cur==="pause") return `
+    <div class="empty"><b>Пауза до 1 апреля</b>Месяц не считается пропуском. Лига сохраняется, очки не начисляются, вы не входите в группу.</div>
+    <div class="card" style="margin-top:11px"><div class="k">Что продолжает действовать</div>
+      <div style="font-size:14px;line-height:1.5;margin-top:6px">Условия лиги и сезонные бонусы работают весь месяц. Накопление следующей паузы приостановлено.</div></div>
+    ${linkTerms(p)}${linkSeason(d)}`;
+  if(cur==="results") return `
+    <div class="empty"><b>Вы поднялись в Обсидиановую лигу</b>3 место из 20 в аметистовой группе. С 1 марта доступна седьмая категория кэшбэка и лимит кэшбэка ×2,0.</div>
+    <div class="card" style="margin-top:11px"><div class="k">Итог месяца</div>
+      <div class="big" style="margin-top:3px">${d.points} очков</div>
+      <div class="meter"><span class="a" style="width:${Math.round(d.sum/d.points*100)}%"></span><span class="b" style="width:${Math.round(d.reg/d.points*100)}%"></span></div>
+      <div class="mrow"><span>за сумму покупок — ${d.sum}</span><span>за регулярность покупок — ${d.reg}</span></div></div>
+    <button class="rbtn" onclick="go('picker')">Выбрать новые категории кэшбэка</button>
+    <p class="hint">Новая группа появится 1 марта. В Обсидиановой лиге 18 участников: 3-е смогут перейти в следующую лигу.</p>`;
+
+  const inDown = z[3] && d.place>z[0]-z[3], inUp = d.place<=z[1];
+  const act = cur==="newbie"
+    ? `<div class="action calm">В бронзовой лиге никто не переходит в лигу ниже. Восемь первых мест переходят в следующую лигу — <b>нужно ещё 3 похода</b>, чтобы попасть в эту зону.</div>`
+    : inDown ? `<div class="action">До безопасной зоны 52 очка. <b>Два похода до конца месяца</b> закроют разрыв.</div>`
+    : inUp ? `<div class="action calm">Вы в зоне повышения. <b>Держите поход в неделю</b>, чтобы остаться в ней до конца месяца.</div>`
+    : `<div class="action calm">До зоны повышения 88 очков. <b>Ещё один поход на этой неделе</b> — и вы подниметесь на три места.</div>`;
+
+  return `${act}
+    <div class="card"><div class="k">Очки за месяц</div><div class="big">${d.points}</div>
+      <div class="meter"><span class="a" style="width:${Math.round(d.sum/d.points*100)}%"></span><span class="b" style="width:${Math.round(d.reg/d.points*100)}%"></span></div>
+      <div class="mrow"><span>за сумму покупок — ${d.sum}</span><span>за регулярность покупок — ${d.reg}</span></div></div>
+    <div class="row2">
+      <div class="card"><div class="k">Походов в магазин</div><div class="big">${d.trips}</div></div>
+      <div class="card"><div class="k">Недель подряд</div><div class="big">${d.streak}</div></div></div>
+    <div class="card"><div class="k">Недели этого месяца</div>
+      <div class="weeks">${d.weeks.map((w,i)=>`<i class="${w?"on":"miss"} ${i===d.curWeek?"now":""}"></i>`).join("")}</div>
+      ${d.curWeek!=null?`<p class="hint" style="margin-top:7px">Обведена текущая неделя</p>`:""}</div>
+    ${linkTerms(p)}${linkSeason(d)}`;
+}
+const linkTerms = p=>`<button class="rowlink" onclick="go('terms')">
+  <div><div class="t2">Мои условия</div><div class="s2">${p[1]} ${pl(p[1],"категория","категории","категорий")} кэшбэка, лимит кэшбэка ×${p[2]}</div></div><span class="go">›</span></button>`;
+const linkSeason = d=>`<button class="rowlink" onclick="go('season')">
+  <div><div class="t2">Сезон и паузы</div><div class="s2">${d.season} из 6 сезонных знаков, пауз в запасе: ${d.pauses}</div></div><span class="go">›</span></button>`;
+
+/* ─────────── окно 1а: лестница ─────────── */
+function scLadder(){
+  const d=v();
+  const perks=["","+1 категория кэшбэка на выбор","+1 категория, лимит кэшбэка выше","лимит выше","+1 категория, первый любимый товар",
+    "лимит кэшбэка выше","+1 категория, +1 товар","+1 категория кэшбэка на выбор","+1 категория, +1 товар","+1 категория, лимит кэшбэка выше","+1 товар, лимит кэшбэка ×2,5"];
+  let out=`<p class="hint" style="margin:0 0 12px">Пройденные лиги видны полностью. Что будет дальше — скрыто, но видно, что каждая следующая улучшает условия.</p>`;
+  for(let i=LEAGUES.length-1;i>=0;i--){
+    const [nm,c]=LEAGUES[i];
+    if(i>d.league){
+      out+=`<div class="step fog"><span class="num">${i+1}</span>
+        <span class="fogged">${gem(c,30)}</span>
+        <div><div class="nm fogged">${nm}</div><div class="perk">${perks[i]}</div></div>
+        <span class="lock">группа скрыта</span></div>`;
+    } else if(i===d.league){
+      out+=`<div class="step current"><span class="num" style="color:#C8E8D4">${i+1}</span>${gem(c,38)}
+        <div><div class="nm">${nm} лига</div>
+        <div class="ps">${d.place===null?"пауза, лига сохраняется":d.place+" место из "+ZONES[i][0]+" · "+d.points+" очков"}</div></div></div>`;
+    } else {
+      out+=`<div class="step passed"><span class="num">${i+1}</span>${gem(c,30)}
+        <div><div class="nm">${nm}</div><div class="ps">пройдено</div></div></div>`;
+    }
+  }
+  return out+`<p class="hint">Всего 11 лиг. Названия открытых лиг больше не скрываются — даже если вы опуститесь ниже.</p>`;
+}
+
+/* ─────────── экран 2 ─────────── */
+function scGroup(){
+  const d=v(), z=ZONES[d.league];
+  if(cur==="pause") return `<div class="empty"><b>В этом месяце вы не участвуете</b>Пауза активна, вы не входите в группу. Вы вернётесь в игру 1 апреля.</div>`;
+  const rows=[]; let pts=780;
+  for(let i=1;i<=z[0];i++){
+    const me=i===d.place;
+    pts = i===1?780:pts-(9+(i*5)%13);
+    if(i===z[1]+1) rows.push(`<div class="sep">сохраняют текущую лигу</div>`);
+    if(z[3] && i===z[0]-z[3]+1) rows.push(`<div class="sep">переходят в лигу ниже</div>`);
+    rows.push(`<div class="prow ${me?"me":""}"><span class="pos">${i}</span>
+      <span class="nick">${me?"Вы":NICKS[(i*7)%NICKS.length]}</span>
+      <span class="pts">${me?d.points:pts}</span></div>`);
+  }
+  let comb=""; for(let i=1;i<=z[0];i++){
+    let cl=i<=z[1]?"up":(z[3]&&i>z[0]-z[3]?"down":""); if(i===d.place) cl+=" me";
+    comb+=`<i class="${cl}"></i>`;
+  }
+  return `<div class="zoneline"><div class="z1"><b>${z[1]}</b>переходят в следующую лигу</div>
+      <div class="z2"><b>${z[2]}</b>сохраняют текущую лигу</div><div class="z3"><b>${z[3]||"—"}</b>переходят в лигу ниже</div></div>
+    <div class="comb">${comb}</div>
+    <div class="legend"><span><i class="dot" style="background:var(--up)"></i>в следующую лигу</span>
+      <span><i class="dot" style="background:#CBD5CE"></i>сохраняют</span>
+      <span><i class="dot" style="background:var(--down)"></i>в лигу ниже</span></div>
+    <div class="sep">переходят в следующую лигу</div>${rows.join("")}
+    <p class="hint">Имена и адреса участников не показываются. Состав группы меняется каждый месяц.</p>`;
+}
+
+/* ─────────── экран 3 ─────────── */
+function scTerms(){
+  const d=v(), p=PACK[d.league], sel=picked||d.picked;
+  const slots=[];
+  for(let i=0;i<p[1];i++){
+    const fresh = cur==="results" && i===p[1]-1 && !sel[i];
+    if(sel[i]){ const [g,s]=sel[i].split(":");
+      slots.push(`<button class="slot" onclick="go('picker')">${s}<small>${g}</small></button>`);
+    } else slots.push(`<button class="slot empty ${fresh?"fresh":""}" onclick="go('picker')">${fresh?"новая категория кэшбэка":"выбрать"}</button>`);
+  }
+  const favs=[];
+  for(let i=0;i<p[3];i++) favs.push(d.favs[i]?`<span class="slot">${d.favs[i]}</span>`:`<span class="slot empty">выбрать товар</span>`);
+  const unset = sel.length<p[1];
+  const np = PACK[Math.min(d.league+1,10)];
+  return `${unset?`<div class="action">Выбраны не все доступные категории кэшбэка</div>`:""}
+    <div class="card"><div class="k">Действует в этом месяце</div>
+      <div style="display:flex;gap:18px;margin-top:7px">
+        <div><div class="big">${p[1]}</div><div class="k">категорий</div></div>
+        <div><div class="big">×${p[2]}</div><div class="k">лимит кэшбэка</div></div>
+        <div><div class="big">${p[3]}</div><div class="k">товара</div></div></div></div>
+    <div class="card plain"><h3>Категории кэшбэка</h3>
+      <div class="slots">${slots.join("")}</div>
+      <p class="hint">Тап по категории открывает выбор. Доступно ${p[0]} ${pl(p[0],"категория","категории","категорий")} кэшбэка из 12 — остальные откроются в следующих лигах.</p>
+      ${d.season>=5?`<p class="hint">Одна категория держится на сезонном прогрессе, а не на лиге. При пропуске месяца она уйдёт первой.</p>`:""}</div>
+    ${p[3]?`<div class="card plain"><h3>Любимые товары со скидкой</h3><div class="slots">${favs.join("")}</div></div>`
+        :`<div class="card plain"><h3>Любимые товары</h3><p class="hint">Открываются с рубиновой лиги.</p></div>`}
+    <div class="card plain"><h3>В следующей лиге</h3>
+      <div class="cmp"><span class="now">Категорий кэшбэка на выбор ${p[0]}</span><span class="next">${np[0]}</span></div>
+      <div class="cmp"><span class="now">Выбранных категорий кэшбэка ${p[1]}</span><span class="next">${np[1]}</span></div>
+      <div class="cmp"><span class="now">Лимит кэшбэка ×${p[2]}</span><span class="next">×${np[2]}</span></div>
+      <div class="cmp"><span class="now">Товаров со скидкой ${p[3]}</span><span class="next">${np[3]}</span></div>
+      <p class="hint">Название следующей лиги пока скрыто — оно откроется, когда вы туда подниметесь.</p></div>
+    <button class="rbtn" onclick="go('picker')">${unset?"Выбрать категории":"Изменить категории"}</button>`;
+}
+
+/* ─────────── окно 3а: выбор категорий ─────────── */
+function scPicker(){
+  const d=v(), p=PACK[d.league], sel=(picked||d.picked).slice();
+  const often=["готовая еда:салаты","молочное:творог","хлеб:батоны","кофе и чай:кофе зерновой","овощи и фрукты:овощи"];
+  let out=`<div class="counter"><span class="c">${sel.length} из ${p[1]}</span>
+      <span class="bar"><i style="width:${Math.round(sel.length/p[1]*100)}%"></i></span></div>`;
+  GROUPS.forEach((g,gi)=>{
+    const open = gi<p[0];
+    if(!open){
+      out+=`<div class="grp locked"><summary style="display:flex;padding:13px 14px;align-items:center;gap:10px;font-weight:600;font-size:14.5px">
+        ${g[0]}<span class="lockmsg">откроется в следующих лигах</span></summary></div>`;
+      return;
+    }
+    const items=g[2].map(sub=>{
+      const id=`${g[0].toLowerCase()}:${sub}`, on=sel.includes(id);
+      const tag=often.includes(id)?`<span class="tag">часто берёте</span>`:`<span class="r">${String(g[1]).replace(".",",")} %</span>`;
+      return `<button class="subrow ${on?"on":""}" onclick="toggle('${id}')">${sub}${tag}</button>`;
+    }).join("");
+    out+=`<details class="grp" ${gi<3?"open":""}><summary>${g[0]}<span class="rate">${String(g[1]).replace(".",",")} %</span></summary>
+      <div class="subs">${items}</div></details>`;
+  });
+  out+=`<p class="hint">Ставка зависит от товарной группы, а не от лиги: чем выше маржинальность группы, тем выше кэшбэк.</p>
+    <button class="rbtn" ${sel.length?"":"disabled"} onclick="go('terms')">Подтвердить выбор</button>
+    <p class="hint">Выбор действует до конца месяца, поменять его будет нельзя.</p>`;
+  return out;
+}
+function toggle(id){
+  const d=v(), p=PACK[d.league];
+  let sel=(picked||d.picked).slice();
+  if(sel.includes(id)) sel=sel.filter(x=>x!==id);
+  else if(sel.length<p[1]) sel.push(id);
+  else { alert("Все слоты заняты. Сначала снимите одну подкатегорию."); return; }
+  picked=sel; render();
+}
+
+/* ─────────── экран 4 ─────────── */
+function scSeason(){
+  const d=v();
+  const cells=[]; for(let i=0;i<6;i++){ const on=i<d.season; cells.push(`<i class="${on&&i===0?"leaving":(on?"on":"")}"></i>`); }
+  const thr=[[3,"Дополнительный товар со скидкой"],[4,"Повышенный лимит кэшбэка сверх лиги"],
+             [5,"Дополнительная категория кэшбэка"],[6,"Все три бонуса и защита лиги при одном неудачном месяце"]];
+  return `<div class="card"><div class="k">Знаков в текущем сезоне</div><div class="big">${d.season} из 6</div>
+      <div class="season">${cells.join("")}</div>
+      <p class="hint">${d.season?"Серая ячейка выпадет из окна в конце месяца — на её место встанет результат этого месяца.":"Знак начисляется за каждый месяц, в котором вы не опустились в лигу ниже."}</p></div>
+    <div class="card plain"><h3>Что открывают знаки</h3>
+      ${thr.map(([n,t])=>`<div class="thr ${d.season>=n?"done":""}"><span class="n">${n}</span><span class="txt">${t}</span></div>`).join("")}</div>
+    <div class="card"><div class="k">Паузы</div>
+      <div style="display:flex;gap:20px;margin-top:6px">
+        <div><div class="big">${d.pauses}</div><div class="k">в запасе</div></div>
+        <div><div class="big">${d.toPause}</div><div class="k">${pl(d.toPause,"неделя","недели","недель")} до следующей</div></div></div>
+      <button class="rbtn" ${d.pauses?"":"disabled"}>${cur==="pause"?"Пауза уже стоит на этот месяц":"Поставить паузу на следующий месяц"}</button>
+      <p class="hint">Пауза ставится заранее на календарный месяц: он не считается пропуском, лига сохраняется, очки не начисляются. Одна пауза даётся за 12 активных недель подряд, в запасе не больше двух. Пока пауза действует, накопление следующей стоит на месте.</p></div>
+    <div class="card plain"><h3>Подписка</h3>
+      <p class="hint" style="margin-top:0">Не даёт паузы сама по себе — меняет их запас и удобство: до 4 пауз вместо 2, пауза за 8 активных недель вместо 12, дополнительная категория кэшбэка сверх лиги, ранний выбор категорий, замена набора любимых товаров в середине месяца.</p>
+      <button class="rbtn ghost">Подробнее о подписке</button></div>`;
+}
+
+/* ─────────── каркас ─────────── */
+function go(t){ tab=t; render(); }
+function setVariant(id){ cur=id; picked=null; if(tab==="picker"||tab==="ladder") tab="league"; render(); }
+
+function render(){
+  document.getElementById("hero").className="hero";
+  document.getElementById("hero").innerHTML=hero();
+  const body={league:scLeague,ladder:scLadder,group:scGroup,terms:scTerms,picker:scPicker,season:scSeason}[tab]();
+  const sh=document.getElementById("sheet"); sh.innerHTML=body; sh.scrollTop=0;
+
+  const icons={league:"M4 12l8-7 8 7v7a2 2 0 0 1-2 2h-3v-5H9v5H6a2 2 0 0 1-2-2z",
+    group:"M7 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm10 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM2 20c0-3 2.5-5 5-5s5 2 5 5zm11 0c0-3 2.5-5 5-5s4 2 4 5z",
+    terms:"M3 7h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zm0-2 2-2h14l2 2z",
+    season:"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 5v5l4 2-.8 1.6L11 13z"};
+  document.getElementById("nav").innerHTML=SCREENS.map(([id,label])=>{
+    const active = tab===id || (tab==="ladder"&&id==="league") || (tab==="picker"&&id==="terms");
+    return `<button aria-selected="${active}" onclick="go('${id}')">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="${active?"#1F1F1F":"#8A958E"}"><path d="${icons[id]}"/></svg>${label}</button>`;
+  }).join("");
+  document.getElementById("variants").innerHTML=Object.entries(VARIANTS).map(([id,d])=>
+    `<button class="chip" aria-pressed="${cur===id}" onclick="setVariant('${id}')">${d.label}<small>${d.hint}</small></button>`).join("");
+}
+render();
+</script>
+</body>
+</html>
